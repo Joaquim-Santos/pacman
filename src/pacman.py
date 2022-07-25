@@ -11,7 +11,8 @@ class PacMan:
         self.__color = Colors().get_color('yellow')
         self.__radius = screen_dimensions[0] // 40
         self.__pixel_width = 0
-        self.__center = [self.__radius, self.__radius]
+        self.__center = [self.__radius, self.__radius ]
+        self.__board_position = [0, 0]
 
         self.__mouth_points = None
         self.__mouth_color = Colors().get_color('black')
@@ -22,8 +23,9 @@ class PacMan:
         self.__eye_radius = self.__radius // 10
         self.__eye_pixel_width = 0
 
-        self.__speed = 0.2
+        self.__speed = 1
         self.__max_positions = [screen_dimensions[0], screen_dimensions[1]]
+        self.__cell_length = self.__radius * 2
 
     def __set_mouth_points(self) -> None:
         self.__mouth_points = (
@@ -45,7 +47,8 @@ class PacMan:
         if bigger_than_max or smaller_than_zero:
             self.__speed = -self.__speed
 
-        self.__center[axis] += self.__speed
+        self.__board_position[axis] += self.__speed
+        self.__center[axis] = (self.__board_position[axis] * self.__cell_length) + self.__radius
         self.__set_mouth_points()
         self.__set_eye_center()
 

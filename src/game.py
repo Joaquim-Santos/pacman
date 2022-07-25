@@ -22,6 +22,7 @@ class Game:
             self.__screen.fill()
             self._move_pacman()
             pygame.display.update()
+            pygame.time.delay(100)
 
             self._verify_events()
 
