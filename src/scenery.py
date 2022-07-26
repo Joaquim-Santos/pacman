@@ -5,10 +5,13 @@ from typing import Tuple
 from src.screen import Screen
 from src.colors import Colors
 from src.pacman import PacMan
+from src.font import Font
 
 
 class Scenery:
     def __init__(self, length: int, pacman: PacMan) -> None:
+        pygame.init()
+
         self.__pacman = pacman
         self.__block_length = length
         self.__pill_id = 1
@@ -47,6 +50,11 @@ class Scenery:
             [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
         ]
 
+        self.__score_position = (
+            (len(self.__matrix) + 1) * self.__block_length,
+            50
+        )
+
     @staticmethod
     def __get_color(number: int) -> Tuple[int, int, int]:
         colors = {
@@ -77,6 +85,8 @@ class Scenery:
 
                 self.__draw_object(x, y, column, screen)
 
+        self.__render_score(screen)
+
     def verify_events(self) -> None:
         self.__pacman.verify_events()
 
@@ -101,7 +111,11 @@ class Scenery:
         if self.__matrix[line][column] == self.__pill_id:
             self.__matrix[line][column] = 0
             self.__points += 1
-            print(self.__points)
+
+    def __render_score(self, screen: Screen) -> None:
+        score_surface = Font("arial", 26)\
+            .render_font(f"Score: {self.__points}", 'yellow')
+        screen.game_screen.blit(score_surface, self.__score_position)
 
     def move_pacman(self, screen: Screen) -> None:
         self.__pacman.set_target_position()
