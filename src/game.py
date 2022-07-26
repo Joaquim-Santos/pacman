@@ -10,17 +10,16 @@ class Game:
         self.__cell_size = 600 // 30
         self.__continue_game = True
 
-        self.__pacman = PacMan(self.__screen.get_dimensions(), self.__cell_size)
-        self.__scenery = Scenery(self.__cell_size)
+        pacman = PacMan(self.__cell_size)
+        self.__scenery = Scenery(self.__cell_size, pacman)
 
     def _verify_events(self) -> None:
         if pygame.event.get(pygame.QUIT):
             self.__continue_game = False
 
-        self.__pacman.verify_events()
-
     def _move_pacman(self) -> None:
-        self.__pacman.walk(self.__screen)
+        self.__scenery.verify_events()
+        self.__scenery.move_pacman(self.__screen)
 
     def start(self) -> None:
 

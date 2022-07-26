@@ -4,11 +4,16 @@ from typing import Tuple
 
 from src.screen import Screen
 from src.colors import Colors
+from src.pacman import PacMan
 
 
 class Scenery:
-    def __init__(self, length: int):
+    def __init__(self, length: int, pacman: PacMan) -> None:
+        self.__pacman = pacman
         self.__block_length = length
+        self.__pill_id = 1
+        self.__wall_id = 2
+
         self.__matrix = [
             [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
             [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2],
@@ -51,11 +56,11 @@ class Scenery:
 
         return colors[number]
 
-    def __draw_object(self, x: int, y: int, object_type: int, screen: Screen):
+    def __draw_object(self, x: int, y: int, object_type: int, screen: Screen) -> None:
         block = (x, y, self.__block_length, self.__block_length)
         color = self.__get_color(object_type)
 
-        if object_type != 1:
+        if object_type != self.__pill_id:
             pygame.draw.rect(screen.game_screen, color, block, 0)
         else:
             x += self.__block_length // 2
@@ -70,3 +75,29 @@ class Scenery:
                 y = number_column * self.__block_length
 
                 self.__draw_object(x, y, column, screen)
+
+    def verify_events(self) -> None:
+        self.__pacman.verify_events()
+
+    def __movement_is_allowed(self) -> bool:
+        matrix_dimensions = [len(self.__matrix), len(self.__matrix[0])]
+        target_positions = self.__pacman.target_positions
+        line = target_positions[0]
+        column = target_positions[1]
+
+        in_matrix_dimensions = (0 <= line < matrix_dimensions[0]) and \
+                               (0 <= column < matrix_dimensions[1])
+
+        not_in_wall = (self.__matrix[line][column] != self.__wall_id)
+
+        return in_matrix_dimensions and not_in_wall
+
+    def move_pacman(self, screen: Screen) -> None:
+        self.__pacman.set_target_position()
+
+        if self.__movement_is_allowed():
+            self.__pacman.walk()
+        else:
+            self.__pacman.reset_target_position()
+
+        self.__pacman.draw_pacman(screen)
