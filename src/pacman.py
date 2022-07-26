@@ -1,12 +1,12 @@
 import pygame
 
-from typing import Tuple
+from src.game_element import GameElement
 
 from src.colors import Colors
 from src.screen import Screen
 
 
-class PacMan:
+class PacMan(GameElement):
     def __init__(self, block_size: int) -> None:
         self.__color = Colors().get_color('yellow')
         self.__radius = block_size // 2
@@ -76,7 +76,7 @@ class PacMan:
                 (self.__board_position[axis] * self.__cell_length) + self.__radius
         )
 
-    def draw_pacman(self, screen: Screen) -> None:
+    def draw(self, screen: Screen) -> None:
         pygame.draw.circle(screen.game_screen, self.__color, self.__center,
                            self.__radius, self.__pixel_width)
         pygame.draw.polygon(screen.game_screen, self.__mouth_color, self.__mouth_points,
@@ -90,7 +90,7 @@ class PacMan:
     def reset_target_position(self) -> None:
         self.__target_positions = self.board_position
 
-    def walk(self) -> None:
+    def apply_rules(self) -> None:
         self.__board_position[self.__movement_axis] = self.__target_positions[self.__movement_axis]
 
         self.__set_center(self.__movement_axis)
