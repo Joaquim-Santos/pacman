@@ -11,8 +11,8 @@ class PacMan:
         self.__color = Colors().get_color('yellow')
         self.__radius = block_size // 2
         self.__pixel_width = 0
-        self.__center = [self.__radius, self.__radius ]
-        self.__board_position = [0, 0]
+        self.__center = [self.__radius, self.__radius]
+        self.__board_position = [1, 1]
 
         self.__mouth_points = None
         self.__mouth_color = Colors().get_color('black')
@@ -27,6 +27,9 @@ class PacMan:
         self.__movement_axis = 0
         self.__max_positions = [screen_dimensions[0], screen_dimensions[1]]
         self.__cell_length = block_size
+
+        self.__set_center(0)
+        self.__set_center(1)
 
     def verify_events(self):
         for event in pygame.event.get():
@@ -60,6 +63,19 @@ class PacMan:
                 self.__center[1] - int(self.__radius * 0.7)
         )
 
+    def __set_center(self, axis: int):
+        self.__center[axis] = (
+                (self.__board_position[axis] * self.__cell_length) + self.__radius
+        )
+
+    def __draw_pacman(self, screen: Screen):
+        pygame.draw.circle(screen.game_screen, self.__color, self.__center,
+                           self.__radius, self.__pixel_width)
+        pygame.draw.polygon(screen.game_screen, self.__mouth_color, self.__mouth_points,
+                            self.__mouth_pixel_width)
+        pygame.draw.circle(screen.game_screen, self.__eye_color, self.__eye_center,
+                           self.__eye_radius, self.__eye_pixel_width)
+
     def walk(self, screen: Screen) -> None:
         bigger_than_max = (
                 (self.__center[self.__movement_axis] + self.__radius) > self.__max_positions[self.__movement_axis]
@@ -73,15 +89,8 @@ class PacMan:
         else:
             self.__board_position[self.__movement_axis] += self.__speed
 
-        self.__center[self.__movement_axis] = (
-                (self.__board_position[self.__movement_axis] * self.__cell_length) + self.__radius
-        )
+        self.__set_center(self.__movement_axis)
         self.__set_mouth_points()
         self.__set_eye_center()
 
-        pygame.draw.circle(screen.game_screen, self.__color, self.__center,
-                           self.__radius, self.__pixel_width)
-        pygame.draw.polygon(screen.game_screen, self.__mouth_color, self.__mouth_points,
-                            self.__mouth_pixel_width)
-        pygame.draw.circle(screen.game_screen, self.__eye_color, self.__eye_center,
-                           self.__eye_radius, self.__eye_pixel_width)
+        self.__draw_pacman(screen)
