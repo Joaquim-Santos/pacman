@@ -13,6 +13,7 @@ class Scenery:
         self.__block_length = length
         self.__pill_id = 1
         self.__wall_id = 2
+        self.__points = 0
 
         self.__matrix = [
             [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
@@ -92,10 +93,21 @@ class Scenery:
 
         return in_matrix_dimensions and not_in_wall
 
+    def __get_pill(self):
+        target_positions = self.__pacman.target_positions
+        line = target_positions[0]
+        column = target_positions[1]
+
+        if self.__matrix[line][column] == self.__pill_id:
+            self.__matrix[line][column] = 0
+            self.__points += 1
+            print(self.__points)
+
     def move_pacman(self, screen: Screen) -> None:
         self.__pacman.set_target_position()
 
         if self.__movement_is_allowed():
+            self.__get_pill()
             self.__pacman.walk()
         else:
             self.__pacman.reset_target_position()
