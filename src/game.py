@@ -2,6 +2,7 @@ import pygame
 from src.screen import Screen
 from src.pacman import PacMan
 from src.scenery import Scenery
+from src.ghost import Ghost
 
 
 class Game:
@@ -10,7 +11,8 @@ class Game:
         self.__cell_size = 600 // 30
 
         pacman = PacMan(self.__cell_size)
-        self.__scenery = Scenery(self.__cell_size, pacman)
+        blinky = Ghost(self.__cell_size, 'red')
+        self.__scenery = Scenery(self.__cell_size, pacman, [blinky])
 
     def start(self) -> None:
 

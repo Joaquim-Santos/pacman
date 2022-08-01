@@ -1,19 +1,22 @@
 import pygame
 
-from typing import Tuple
+from typing import Tuple, List
 
 from src.game_element import GameElement
 from src.screen import Screen
 from src.colors import Colors
 from src.pacman import PacMan
 from src.font import Font
+from src.ghost import Ghost
 
 
 class Scenery(GameElement):
-    def __init__(self, length: int, pacman: PacMan) -> None:
+    def __init__(self, length: int, pacman: PacMan, ghosts: List[Ghost]) -> None:
         pygame.init()
 
         self.__pacman = pacman
+        self.__ghosts = ghosts
+
         self.__block_length = length
         self.__pill_id = 1
         self.__wall_id = 2
@@ -55,6 +58,13 @@ class Scenery(GameElement):
             (len(self.__matrix) + 1) * self.__block_length,
             50
         )
+
+        self.__directions = {
+            'up': 1,
+            'down': 2,
+            'right': 3,
+            'left': 4
+        }
 
     @staticmethod
     def __get_color(number: int) -> Tuple[int, int, int]:
@@ -119,6 +129,24 @@ class Scenery(GameElement):
             .render_font(f"Score: {self.__points}", 'yellow')
         screen.game_screen.blit(score_surface, self.__score_position)
 
+    def __get_ghost_possible_directions(self, ghost: Ghost) -> List[int]:
+        ghost_positions = ghost.board_position
+        ghost_y = ghost_positions[1]
+        ghost_x = ghost_positions[0]
+
+        possible_directions = []
+
+        if self.__matrix[ghost_x][ghost_y - 1] != self.__wall_id:
+            possible_directions.append(self.__directions['up'])
+        if self.__matrix[ghost_x][ghost_y + 1] != self.__wall_id:
+            possible_directions.append(self.__directions['down'])
+        if self.__matrix[ghost_x - 1][ghost_y] != self.__wall_id:
+            possible_directions.append(self.__directions['left'])
+        if self.__matrix[ghost_x + 1][ghost_y] != self.__wall_id:
+            possible_directions.append(self.__directions['right'])
+
+        return possible_directions
+
     def apply_rules(self) -> None:
         self.__pacman.set_target_position()
 
@@ -128,6 +156,8 @@ class Scenery(GameElement):
         else:
             self.__pacman.reset_target_position()
 
+        print(self.__get_ghost_possible_directions(self.__ghosts[0]))
+
     def run(self, screen: Screen):
         self.draw(screen)
         self.verify_events()
@@ -135,3 +165,5 @@ class Scenery(GameElement):
 
         self.__pacman.draw(screen)
         self.__pacman.verify_events()
+
+        self.__ghosts[0].draw(screen)
