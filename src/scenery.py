@@ -24,13 +24,16 @@ class Scenery(GameElement):
             Ghost(length, 'pink'),
             Ghost(length, 'cyan')
         ]
+
         self.__state = State.PLAYING
 
         self.__block_length = length
         self.__pill_id = 1
         self.__wall_id = 2
+
         self.__points = 0
         self.__max_points = 0
+        self.__lives = 5
 
         self.__matrix = [
             [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
@@ -67,6 +70,10 @@ class Scenery(GameElement):
         self.__score_position = (
             (len(self.__matrix) + 1) * self.__block_length,
             50
+        )
+        self.__lives_position = (
+            (len(self.__matrix) + 1) * self.__block_length,
+            100
         )
 
         self.__set_max_points()
@@ -192,7 +199,11 @@ class Scenery(GameElement):
     def __render_score(self, screen: Screen) -> None:
         score_surface = Font("arial", 26)\
             .render_font(f"Score: {self.__points}", 'yellow')
+        lives_surface = Font("arial", 26)\
+            .render_font(f"Lives: {self.__lives}", 'yellow')
+
         screen.game_screen.blit(score_surface, self.__score_position)
+        screen.game_screen.blit(lives_surface, self.__lives_position)
 
     def __get_ghost_possible_directions(self, ghost: Ghost) -> List[Direction]:
         ghost_positions = ghost.board_position
@@ -213,7 +224,11 @@ class Scenery(GameElement):
         return possible_directions
 
     def __verify_game_over(self, ghost: Ghost) -> bool:
-        return self.__pacman.board_position == ghost.board_position
+        if self.__pacman.board_position == ghost.board_position:
+            self.__lives -= 1
+            self.__pacman.reset_board_position()
+
+        return self.__lives == 0
 
     def __verify_victory(self) -> bool:
         return self.__points == self.__max_points

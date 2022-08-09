@@ -32,9 +32,7 @@ class PacMan(GameElement):
         self.__cell_length = block_size
         self.__target_positions = self.__board_position.copy()
 
-        self.__set_center(0)
-        self.__set_center(1)
-
+        self.__set_center()
 
     @property
     def target_positions(self) -> list:
@@ -43,6 +41,10 @@ class PacMan(GameElement):
     @property
     def board_position(self) -> list:
         return self.__board_position.copy()
+
+    def reset_board_position(self) -> None:
+        self.__board_position = [1, 1]
+        self.reset_target_position()
 
     def verify_events(self, events: List[Event]) -> None:
         for event in events:
@@ -80,12 +82,17 @@ class PacMan(GameElement):
                 self.__center[1] - int(self.__radius * 0.7)
         )
 
-    def __set_center(self, axis: int) -> None:
-        self.__center[axis] = (
-                (self.__board_position[axis] * self.__cell_length) + self.__radius
+    def __set_center(self) -> None:
+        self.__center = (
+                (self.__board_position[0] * self.__cell_length) + self.__radius,
+                (self.__board_position[1] * self.__cell_length) + self.__radius
         )
 
     def draw(self, screen: Screen) -> None:
+        self.__set_center()
+        self.__set_mouth_points()
+        self.__set_eye_center()
+
         pygame.draw.circle(screen.game_screen, self.__color, self.__center,
                            self.__radius, self.__pixel_width)
         pygame.draw.polygon(screen.game_screen, self.__mouth_color, self.__mouth_points,
@@ -101,7 +108,3 @@ class PacMan(GameElement):
 
     def apply_rules(self) -> None:
         self.__board_position[self.__movement_axis] = self.__target_positions[self.__movement_axis]
-
-        self.__set_center(self.__movement_axis)
-        self.__set_mouth_points()
-        self.__set_eye_center()
