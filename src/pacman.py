@@ -19,6 +19,8 @@ class PacMan(GameElement):
         self.__mouth_points = None
         self.__mouth_color = Colors().get_color('black')
         self.__mouth_pixel_width = 0
+        self.__mouth_opening = 0
+        self.__mouth_opening_speed = 1
 
         self.__eye_center = None
         self.__eye_color = Colors().get_color('black')
@@ -32,6 +34,7 @@ class PacMan(GameElement):
 
         self.__set_center(0)
         self.__set_center(1)
+
 
     @property
     def target_positions(self) -> list:
@@ -61,10 +64,14 @@ class PacMan(GameElement):
                     self.__speed = 0
 
     def __set_mouth_points(self) -> None:
+        self.__mouth_opening += self.__mouth_opening_speed
+        if self.__mouth_opening >= self.__radius or self.__mouth_opening <= 0:
+            self.__mouth_opening_speed = - self.__mouth_opening_speed
+
         self.__mouth_points = (
             self.__center,
-            (self.__center[0] + self.__radius, self.__center[1]),
-            (self.__center[0] + self.__radius, self.__center[1] - int(self.__radius * 0.7))
+            (self.__center[0] + self.__radius, self.__center[1] + self.__mouth_opening),
+            (self.__center[0] + self.__radius, self.__center[1] - self.__mouth_opening)
         )
 
     def __set_eye_center(self) -> None:
