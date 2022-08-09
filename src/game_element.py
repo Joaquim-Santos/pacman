@@ -1,4 +1,6 @@
 from abc import ABCMeta, abstractmethod
+from pygame.event import Event
+from typing import List
 
 from src.screen import Screen
 
@@ -10,7 +12,7 @@ class GameElement(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def verify_events(self) -> None:
+    def verify_events(self, events: List[Event]) -> None:
         pass
 
     @abstractmethod

@@ -1,5 +1,6 @@
 import pygame
 
+from pygame.event import Event
 from typing import Tuple, List
 
 from src.game_element import GameElement
@@ -8,19 +9,28 @@ from src.colors import Colors
 from src.pacman import PacMan
 from src.font import Font
 from src.ghost import Ghost
+from src.directions import Direction
+from src.states import State
 
 
 class Scenery(GameElement):
-    def __init__(self, length: int, pacman: PacMan, ghosts: List[Ghost]) -> None:
+    def __init__(self, length: int) -> None:
         pygame.init()
 
-        self.__pacman = pacman
-        self.__ghosts = ghosts
+        self.__pacman = PacMan(length)
+        self.__ghosts = [
+            Ghost(length, 'red'),
+            Ghost(length, 'orange'),
+            Ghost(length, 'pink'),
+            Ghost(length, 'cyan')
+        ]
+        self.__state = State.PLAYING
 
         self.__block_length = length
         self.__pill_id = 1
         self.__wall_id = 2
         self.__points = 0
+        self.__max_points = 0
 
         self.__matrix = [
             [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
@@ -59,12 +69,7 @@ class Scenery(GameElement):
             50
         )
 
-        self.__directions = {
-            'up': 1,
-            'down': 2,
-            'right': 3,
-            'left': 4
-        }
+        self.__set_max_points()
 
     @staticmethod
     def __get_color(number: int) -> Tuple[int, int, int]:
@@ -75,6 +80,36 @@ class Scenery(GameElement):
         }
 
         return colors[number]
+
+    def __set_max_points(self):
+        for line in self.__matrix:
+            for column in line:
+                if column == self.__pill_id:
+                    self.__max_points += 1
+
+    def __change_paused_playing_state(self) -> None:
+        change_state = {
+            State.PAUSED: State.PLAYING,
+            State.PLAYING: State.PAUSED
+        }
+
+        try:
+            self.__state = change_state[self.__state]
+        except KeyError:
+            pass
+
+    def draw(self, screen: Screen) -> None:
+        if self.__state == State.PLAYING:
+            self.__draw_when_playing(screen)
+        elif self.__state == State.PAUSED:
+            self.__draw_when_playing(screen)
+            self.__draw_when_paused(screen)
+        elif self.__state == State.GAME_OVER:
+            self.__draw_when_playing(screen)
+            self.__draw_when_game_over(screen)
+        elif self.__state == State.VICTORY:
+            self.__draw_when_playing(screen)
+            self.__draw_when_victory(screen)
 
     def __draw_object(self, x: int, y: int, object_type: int, screen: Screen) -> None:
         block = (x, y, self.__block_length, self.__block_length)
@@ -88,7 +123,17 @@ class Scenery(GameElement):
 
             pygame.draw.circle(screen.game_screen, color, (x, y), self.__block_length // 10, 0)
 
-    def draw(self, screen: Screen) -> None:
+    @staticmethod
+    def draw_centred_text(screen: Screen, text: str) -> None:
+        paused_surface = Font("arial", 26) \
+            .render_font(text, 'yellow')
+        paused_position = (
+            (screen.game_screen.get_width() - paused_surface.get_width()) // 2,
+            (screen.game_screen.get_height() - paused_surface.get_height()) // 2
+        )
+        screen.game_screen.blit(paused_surface, paused_position)
+
+    def __draw_when_playing(self, screen: Screen) -> None:
         for number_line, line in enumerate(self.__matrix):
             for number_column, column in enumerate(line):
                 x = number_line * self.__block_length
@@ -98,9 +143,29 @@ class Scenery(GameElement):
 
         self.__render_score(screen)
 
-    def verify_events(self) -> None:
-        if pygame.event.get(pygame.QUIT):
-            exit()
+        self.__pacman.draw(screen)
+
+        for ghost in self.__ghosts:
+            ghost.draw(screen)
+
+    def __draw_when_paused(self, screen: Screen) -> None:
+        self.draw_centred_text(screen, "PAUSED")
+
+    def __draw_when_game_over(self, screen: Screen) -> None:
+        self.draw_centred_text(screen, "GAME OVER")
+
+    def __draw_when_victory(self, screen: Screen) -> None:
+        self.draw_centred_text(screen, "VOCÊ VENCEU!!!")
+
+    def verify_events(self, events: List[Event]) -> None:
+        for event in events:
+            if event.type == pygame.QUIT:
+                exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    self.__change_paused_playing_state()
+
+        self.__pacman.verify_events(events)
 
     def __movement_is_allowed(self) -> bool:
         matrix_dimensions = [len(self.__matrix), len(self.__matrix[0])]
@@ -129,7 +194,7 @@ class Scenery(GameElement):
             .render_font(f"Score: {self.__points}", 'yellow')
         screen.game_screen.blit(score_surface, self.__score_position)
 
-    def __get_ghost_possible_directions(self, ghost: Ghost) -> List[int]:
+    def __get_ghost_possible_directions(self, ghost: Ghost) -> List[Direction]:
         ghost_positions = ghost.board_position
         ghost_y = ghost_positions[1]
         ghost_x = ghost_positions[0]
@@ -137,17 +202,33 @@ class Scenery(GameElement):
         possible_directions = []
 
         if self.__matrix[ghost_x][ghost_y - 1] != self.__wall_id:
-            possible_directions.append(self.__directions['up'])
+            possible_directions.append(Direction.UP)
         if self.__matrix[ghost_x][ghost_y + 1] != self.__wall_id:
-            possible_directions.append(self.__directions['down'])
+            possible_directions.append(Direction.DOWN)
         if self.__matrix[ghost_x - 1][ghost_y] != self.__wall_id:
-            possible_directions.append(self.__directions['left'])
+            possible_directions.append(Direction.UP.LEFT)
         if self.__matrix[ghost_x + 1][ghost_y] != self.__wall_id:
-            possible_directions.append(self.__directions['right'])
+            possible_directions.append(Direction.UP.RIGHT)
 
         return possible_directions
 
+    def __verify_game_over(self, ghost: Ghost) -> bool:
+        return self.__pacman.board_position == ghost.board_position
+
+    def __verify_victory(self) -> bool:
+        return self.__points == self.__max_points
+
     def apply_rules(self) -> None:
+        if self.__state == State.PLAYING:
+            self.apply_rules_when_playing()
+        elif self.__state == State.PAUSED:
+            self.apply_rules_when_paused()
+        elif self.__state == State.GAME_OVER:
+            self.apply_rules_when_game_over()
+        elif self.__state == State.VICTORY:
+            self.apply_rules_when_victory()
+
+    def apply_rules_when_playing(self) -> None:
         self.__pacman.set_target_position()
 
         if self.__movement_is_allowed():
@@ -156,14 +237,27 @@ class Scenery(GameElement):
         else:
             self.__pacman.reset_target_position()
 
-        print(self.__get_ghost_possible_directions(self.__ghosts[0]))
+        for ghost in self.__ghosts:
+            directions = self.__get_ghost_possible_directions(ghost)
+            ghost.choice_direction(directions)
+            ghost.apply_rules()
 
-    def run(self, screen: Screen):
-        self.draw(screen)
-        self.verify_events()
+            if self.__verify_game_over(ghost):
+                self.__state = State.GAME_OVER
+
+        if self.__verify_victory():
+            self.__state = State.VICTORY
+
+    def apply_rules_when_paused(self) -> None:
+        pass
+
+    def apply_rules_when_game_over(self) -> None:
+        pass
+
+    def apply_rules_when_victory(self) -> None:
+        pass
+
+    def run(self, screen: Screen, events: List[Event]) -> None:
+        self.verify_events(events)
         self.apply_rules()
-
-        self.__pacman.draw(screen)
-        self.__pacman.verify_events()
-
-        self.__ghosts[0].draw(screen)
+        self.draw(screen)

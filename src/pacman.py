@@ -1,7 +1,9 @@
 import pygame
 
-from src.game_element import GameElement
+from pygame.event import Event
+from typing import List
 
+from src.game_element import GameElement
 from src.colors import Colors
 from src.screen import Screen
 
@@ -39,8 +41,8 @@ class PacMan(GameElement):
     def board_position(self) -> list:
         return self.__board_position.copy()
 
-    def verify_events(self) -> None:
-        for event in pygame.event.get():
+    def verify_events(self, events: List[Event]) -> None:
+        for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT:
                     self.__speed = 1
