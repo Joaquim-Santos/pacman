@@ -1,5 +1,6 @@
 import pygame
 
+from sys import exit
 from pygame.event import Event
 from typing import Tuple, List
 
